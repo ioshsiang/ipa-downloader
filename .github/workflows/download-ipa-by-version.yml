@@ -1,4 +1,4 @@
-name: Download IPA by Version
+name: Download IPA by Version ID
 
 on:
   workflow_dispatch:
@@ -10,10 +10,10 @@ on:
         description: 'App Version ID you want to download (e.g., 123456789)'
         required: true
       APPLE_ID:
-        description: 'Your Apple ID'
+        description: 'Your Apple ID (no 2FA)'
         required: true
       APPLE_PASSWORD:
-        description: 'Your Apple ID password (No 2FA)'
+        description: 'Apple ID password'
         required: true
       APP_COUNTRY:
         description: 'App Store Country Code (e.g., TW)'
@@ -36,10 +36,18 @@ jobs:
         run: |
           pip install -r ipatool-py/requirements.txt
 
+      - name: Authorize App Purchase
+        run: |
+          python3 ipatool-py/main.py purchase \
+            --appId "${{ github.event.inputs.APP_ID }}" \
+            --appleid "${{ github.event.inputs.APPLE_ID }}" \
+            --password "${{ github.event.inputs.APPLE_PASSWORD }}" \
+            --country "${{ github.event.inputs.APP_COUNTRY }}"
+
       - name: Download IPA
         run: |
-          mkdir ipaDown
-          python3 ipatool-py/main.py download_id \
+          mkdir -p ipaDown
+          python3 ipatool-py/main.py download \
             --appId "${{ github.event.inputs.APP_ID }}" \
             --appVer "${{ github.event.inputs.APP_VERSION_ID }}" \
             --appleid "${{ github.event.inputs.APPLE_ID }}" \
