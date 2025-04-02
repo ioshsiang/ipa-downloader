@@ -7,10 +7,10 @@ on:
         description: 'App Store App ID (e.g., 6449977582)'
         required: true
       APP_VERSION_ID:
-        description: 'App Version ID you want to download (e.g., 123456789)'
+        description: 'App Version ID (e.g., 123456789)'
         required: true
       APPLE_ID:
-        description: 'Your Apple ID (no 2FA)'
+        description: 'Your Apple ID (No 2FA)'
         required: true
       APPLE_PASSWORD:
         description: 'Apple ID password'
@@ -23,6 +23,7 @@ on:
 jobs:
   download-ipa:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -43,6 +44,8 @@ jobs:
           APPLE_PASSWORD: ${{ github.event.inputs.APPLE_PASSWORD }}
           APP_COUNTRY: ${{ github.event.inputs.APP_COUNTRY }}
         run: |
+          echo "🔐 Logging in with Apple ID: $APPLE_ID"
+          echo "🛒 Purchasing APP_ID: $APP_ID"
           python3 ipatool-py/main.py purchase \
             --appId "$APP_ID" \
             --appleid "$APPLE_ID" \
@@ -58,6 +61,7 @@ jobs:
           APP_COUNTRY: ${{ github.event.inputs.APP_COUNTRY }}
         run: |
           mkdir -p ipaDown
+          echo "⬇️ Downloading version ID: $APP_VERSION_ID for App ID: $APP_ID"
           python3 ipatool-py/main.py download \
             --appId "$APP_ID" \
             --appVer "$APP_VERSION_ID" \
@@ -67,8 +71,7 @@ jobs:
             --output ipaDown
 
       - name: Zip IPA
-        run: |
-          zip -r ipa-output.zip ipaDown
+        run: zip -r ipa-output.zip ipaDown
 
       - name: Push IPA to repo
         run: |
