@@ -6,8 +6,8 @@ on:
       APP_ID:
         description: 'App Store App ID (e.g., 6449977582)'
         required: true
-      APP_VERSION:
-        description: 'Version name you want to download (e.g., 1.2.0)'
+      APP_VERSION_ID:
+        description: 'App Version ID you want to download (e.g., 123456789)'
         required: true
       APPLE_ID:
         description: 'Your Apple ID'
@@ -21,7 +21,7 @@ on:
         default: 'TW'
 
 jobs:
-  get-and-download:
+  download-ipa:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -36,38 +36,22 @@ jobs:
         run: |
           pip install -r ipatool-py/requirements.txt
 
-      - name: Get Version ID
-        id: getver
-        run: |
-          ver_id=$(python3 ipatool-py/main.py historyver_id \
-            --appId "${{ github.event.inputs.APP_ID }}" \
-            --appleid "${{ github.event.inputs.APPLE_ID }}" \
-            --password "${{ github.event.inputs.APPLE_PASSWORD }}" \
-            --country "${{ github.event.inputs.APP_COUNTRY }}" \
-            | grep -E '"${{ github.event.inputs.APP_VERSION }}"' \
-            | sed -E 's/.*"id": ([0-9]+).*/\1/')
-
-          echo "version_id=$ver_id" >> $GITHUB_OUTPUT
-
       - name: Download IPA
-        if: steps.getver.outputs.version_id != ''
         run: |
           mkdir ipaDown
           python3 ipatool-py/main.py download_id \
             --appId "${{ github.event.inputs.APP_ID }}" \
-            --appVer "${{ steps.getver.outputs.version_id }}" \
+            --appVer "${{ github.event.inputs.APP_VERSION_ID }}" \
             --appleid "${{ github.event.inputs.APPLE_ID }}" \
             --password "${{ github.event.inputs.APPLE_PASSWORD }}" \
             --country "${{ github.event.inputs.APP_COUNTRY }}" \
             --output ipaDown
 
       - name: Zip IPA
-        if: steps.getver.outputs.version_id != ''
         run: |
           zip -r ipa-output.zip ipaDown
 
       - name: Push IPA to repo
-        if: steps.getver.outputs.version_id != ''
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
@@ -77,5 +61,5 @@ jobs:
           git checkout main
           git pull
           git add output/ipa-output.zip
-          git commit -m "Add IPA zip for ${{ github.event.inputs.APP_ID }} v${{ github.event.inputs.APP_VERSION }}"
+          git commit -m "Add IPA zip for ${{ github.event.inputs.APP_ID }} version_id ${{ github.event.inputs.APP_VERSION_ID }}"
           git push origin main
