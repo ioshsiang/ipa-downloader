@@ -62,8 +62,21 @@ jobs:
             --country "${{ github.event.inputs.APP_COUNTRY }}" \
             --output ipaDown
 
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-ipa
-          path: ipaDown/*.ipa
+      - name: Zip IPA
+        if: steps.getver.outputs.version_id != ''
+        run: |
+          zip -r ipa-output.zip ipaDown
+
+      - name: Push IPA to repo
+        if: steps.getver.outputs.version_id != ''
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          mkdir -p output
+          mv ipa-output.zip output/
+          git fetch origin
+          git checkout main
+          git pull
+          git add output/ipa-output.zip
+          git commit -m "Add IPA zip for ${{ github.event.inputs.APP_ID }} v${{ github.event.inputs.APP_VERSION }}"
+          git push origin main
