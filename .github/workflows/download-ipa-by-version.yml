@@ -35,7 +35,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r ipatool-py/requirements.txt
-          pip install -e ipatool-py
 
       - name: Get Version ID
         id: getver
