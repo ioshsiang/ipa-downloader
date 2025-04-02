@@ -1,0 +1,69 @@
+name: Download IPA by Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      APP_ID:
+        description: 'App Store App ID (e.g., 6449977582)'
+        required: true
+      APP_VERSION:
+        description: 'Version name you want to download (e.g., 1.2.0)'
+        required: true
+      APPLE_ID:
+        description: 'Your Apple ID'
+        required: true
+      APPLE_PASSWORD:
+        description: 'Your Apple ID password (No 2FA)'
+        required: true
+      APP_COUNTRY:
+        description: 'App Store Country Code (e.g., TW)'
+        required: false
+        default: 'TW'
+
+jobs:
+  get-and-download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r ipatool-py/requirements.txt
+          pip install -e ipatool-py
+
+      - name: Get Version ID
+        id: getver
+        run: |
+          ver_id=$(python3 ipatool-py/main.py historyver_id \
+            --appId "${{ github.event.inputs.APP_ID }}" \
+            --appleid "${{ github.event.inputs.APPLE_ID }}" \
+            --password "${{ github.event.inputs.APPLE_PASSWORD }}" \
+            --country "${{ github.event.inputs.APP_COUNTRY }}" \
+            | grep -E '"${{ github.event.inputs.APP_VERSION }}"' \
+            | sed -E 's/.*"id": ([0-9]+).*/\1/')
+
+          echo "version_id=$ver_id" >> $GITHUB_OUTPUT
+
+      - name: Download IPA
+        if: steps.getver.outputs.version_id != ''
+        run: |
+          mkdir ipaDown
+          python3 ipatool-py/main.py download_id \
+            --appId "${{ github.event.inputs.APP_ID }}" \
+            --appVer "${{ steps.getver.outputs.version_id }}" \
+            --appleid "${{ github.event.inputs.APPLE_ID }}" \
+            --password "${{ github.event.inputs.APPLE_PASSWORD }}" \
+            --country "${{ github.event.inputs.APP_COUNTRY }}" \
+            --output ipaDown
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-ipa
+          path: ipaDown/*.ipa
