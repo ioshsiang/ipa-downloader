@@ -37,22 +37,33 @@ jobs:
           pip install -r ipatool-py/requirements.txt
 
       - name: Authorize App Purchase
+        env:
+          APP_ID: ${{ github.event.inputs.APP_ID }}
+          APPLE_ID: ${{ github.event.inputs.APPLE_ID }}
+          APPLE_PASSWORD: ${{ github.event.inputs.APPLE_PASSWORD }}
+          APP_COUNTRY: ${{ github.event.inputs.APP_COUNTRY }}
         run: |
           python3 ipatool-py/main.py purchase \
-            --appId "${{ github.event.inputs.APP_ID }}" \
-            --appleid "${{ github.event.inputs.APPLE_ID }}" \
-            --password "${{ github.event.inputs.APPLE_PASSWORD }}" \
-            --country "${{ github.event.inputs.APP_COUNTRY }}"
+            --appId "$APP_ID" \
+            --appleid "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --country "$APP_COUNTRY"
 
       - name: Download IPA
+        env:
+          APP_ID: ${{ github.event.inputs.APP_ID }}
+          APP_VERSION_ID: ${{ github.event.inputs.APP_VERSION_ID }}
+          APPLE_ID: ${{ github.event.inputs.APPLE_ID }}
+          APPLE_PASSWORD: ${{ github.event.inputs.APPLE_PASSWORD }}
+          APP_COUNTRY: ${{ github.event.inputs.APP_COUNTRY }}
         run: |
           mkdir -p ipaDown
           python3 ipatool-py/main.py download \
-            --appId "${{ github.event.inputs.APP_ID }}" \
-            --appVer "${{ github.event.inputs.APP_VERSION_ID }}" \
-            --appleid "${{ github.event.inputs.APPLE_ID }}" \
-            --password "${{ github.event.inputs.APPLE_PASSWORD }}" \
-            --country "${{ github.event.inputs.APP_COUNTRY }}" \
+            --appId "$APP_ID" \
+            --appVer "$APP_VERSION_ID" \
+            --appleid "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --country "$APP_COUNTRY" \
             --output ipaDown
 
       - name: Zip IPA
