@@ -1,0 +1,49 @@
+name: Download IPA with action-ipadown
+
+on:
+  workflow_dispatch:
+    inputs:
+      APP_ID:
+        description: 'App Store App ID (e.g., 6449977582)'
+        required: true
+      APP_VERSION_ID:
+        description: 'App Version ID'
+        required: true
+      APPLE_ID:
+        description: 'Apple ID (no 2FA)'
+        required: true
+      APPLE_PASSWORD:
+        description: 'Apple password'
+        required: true
+      APP_COUNTRY:
+        description: 'Store country code (e.g., TW)'
+        required: false
+        default: 'TW'
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install deps
+        run: |
+          pip install -r ipatool-py/requirements.txt
+
+      - name: Download IPA
+        run: |
+          mkdir -p ipaDown
+          python3 workflow_helper/main.py download_id \
+            --appId "${{ github.event.inputs.APP_ID }}" \
+            --appVer "${{ github.event.inputs.APP_VERSION_ID }}" \
+            --appleid "${{ github.event.inputs.APPLE_ID }}" \
+            --password "${{ github.event.inputs.APPLE_PASSWORD }}" \
+            --country "${{ github.event.inputs.APP_COUNTRY }}" \
+            --output ipaDown
+
+      - name: Zip and Push
+        run: |
+          zip -r ipa-output.zip ipaDown
